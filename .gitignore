@@ -1,0 +1,5 @@
+Result/*.csv
+Done/*
+Base/*.csv
+**/__pycache__/
+
