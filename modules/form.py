@@ -1,7 +1,10 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import (
+        UnexpectedAlertPresentException,
+        NoSuchElementException
+        )
 
 from SinCity.Browser.driver_chrome import driver_chrome
 from SinCity.Browser.scrolling import Scrolling
@@ -11,6 +14,7 @@ from modules.miniTools import (
         RecordingNotSended,
         RecordingSuccessSend
         )
+
 from modules.content import GenerateContent
 from modules.config import contact_pages
 
@@ -153,6 +157,7 @@ def SearchForms(driver:str):
 
     return count_form
 
+"""Отправка формы"""
 def submitForm(driver:str, company:str):
     number_form = 0
     for form in driver.find_elements(By.TAG_NAME, 'form'):
@@ -173,41 +178,9 @@ def submitForm(driver:str, company:str):
             
                 try:
                     for field_input in form.find_elements(By.TAG_NAME, 'input'):
-                        if field_input.is_displayed():
+                        """Обрабатываем каждое поле отдельно"""
+                        EnterText(element=field_input, company=company)
 
-                            name = field_input.get_attribute('name')
-                            placeholder = field_input.get_attribute('placeholder')
-                            type_field = field_input.get_attribute('type')
-
-                            full_attrs = f"{name} {placeholder} {type_field}"
-                    
-                            if type_field == 'email':
-                                full_attrs = 'email'
-                            if 'checkbox' in type_field:
-                                try:
-                                    field_input.click()
-                                    print('Отметил чекбокс')
-                                    continue
-                                except Exception as err:
-                                    print(f'error: {err}')
-                        
-                            if type_field == 'submit':
-                                continue
-
-                            content = GenerateContent(full_attrs=full_attrs, company=company)
-                            print(
-                                    f'Placeholder: {placeholder}\n'
-                                    f'Type: {type_field}\n'
-                                    f'Name: {name}\n'
-                                    )
-                            if 'checkbox' not in type_field:
-                                try:
-                                    field_input.click()
-                                except:
-                                    pass
-                                field_input.send_keys(content)
-                                time.sleep(2)
-                
                     count_click_submit_button = SubmitButton(driver=driver, form=form)
 
                     if count_click_submit_button > 0:
@@ -222,6 +195,7 @@ def submitForm(driver:str, company:str):
     
     return False
 
+"""Поиск и ввод текста в textarea"""
 def EnterTextarea(element:str, company:str):
     textarea = element.find_element(By.TAG_NAME, 'textarea')
     name_textarea = textarea.get_attribute('name')
@@ -231,6 +205,46 @@ def EnterTextarea(element:str, company:str):
     content = GenerateContent(full_attrs="textarea", company=company)
     textarea.send_keys(content)
     time.sleep(2)
+
+"""Функционал ввода текста"""
+def EnterText(element:str, company:str):
+    if element.is_displayed():
+
+        name = element.get_attribute('name')
+        placeholder = element.get_attribute('placeholder')
+        type_field = element.get_attribute('type')
+
+        full_attrs = f"{name} {placeholder} {type_field}"
+                    
+        if type_field == 'email':
+            full_attrs = 'email'
+        if 'checkbox' in type_field:
+            try:
+                element.click()
+                print('Отметил чекбокс')
+                return
+            except Exception as err:
+                print(f'error: {err}')
+                        
+        if type_field == 'submit':
+            return 
+
+        content = GenerateContent(full_attrs=full_attrs, company=company)
+        print(
+            f'Placeholder: {placeholder}\n'
+            f'Type: {type_field}\n'
+            f'Name: {name}\n'
+            )
+        """
+        Пытаемся ткнуть в поле ввода. Получается не всегда.
+        Но на некоторых корявых формах помогает вводить данные
+        """
+        try:
+            element.click()
+        except:
+            pass
+        element.send_keys(content)
+        time.sleep(2)
 
 """Функционал обнаружения чек-бокса капчи и клик по ней"""
 def ClickAntiBot(driver:str, form:str):
@@ -242,8 +256,10 @@ def ClickAntiBot(driver:str, form:str):
         checkbox.click()
         driver.switch_to.default_content()
         recaptcha = True
+    except NoSuchElementException:
+        pass
     except Exception as err:
-        print(err)
+        print(f'{RED}{err}{RESET}')
     finally:
         return recaptcha
 
