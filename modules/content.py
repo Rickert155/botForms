@@ -86,6 +86,6 @@ if __name__ == '__main__':
     params = sys.argv
     if len(params) > 1:
         full_attrs = params[1]
-        GenerateContent(company='Rickert Tester', full_attrs=full_attrs)
+        GenerateContent(company='Digital Octane', full_attrs=full_attrs)
     if len(params) == 1:
         print("Введите параметром имя!")

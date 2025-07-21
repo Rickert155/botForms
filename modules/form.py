@@ -1,4 +1,7 @@
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.webdriver.common.keys import Keys
 
 from SinCity.Browser.driver_chrome import driver_chrome
 from SinCity.Browser.scrolling import Scrolling
@@ -31,7 +34,9 @@ def ProcessingDomain(domain:str, company:str):
     driver = None
     try:
         driver = driver_chrome()
-        driver.get(f'https://{domain}')
+        url = domain
+        if '://' not in url:url = f'https://{domain}'
+        driver.get(url)
         time.sleep(2)
         current_url = driver.current_url
 
@@ -57,7 +62,11 @@ def ProcessingDomain(domain:str, company:str):
         if forms == False:
             list_pages = OtherPages(driver=driver, domain=domain)
             if len(list_pages) > 0:
+                count_sended = 0
+                count_not_defined = 0
+
                 number_page=0
+
                 check_forms = False
                 for page in list_pages:
                     number_page+=1
@@ -69,17 +78,27 @@ def ProcessingDomain(domain:str, company:str):
                     if forms != False:
                         check_forms = True
                         print(f'На странице контактов обнаружена форма')
-                        submitForm(driver=driver, company=company)
-                        if submitForm == True:
+                        send_form = submitForm(driver=driver, company=company)
+                        if send_form == True:
                             RecordingSuccessSend(domain=domain, company=company)
+                            count_sended+=1
                             return True
-                        if submitForm != True:
-                            RecordingNotSended(
-                                    domain=domain, 
-                                    company=company,
-                                    reason="unknown_field"
-                                    )
-                            return False
+                        if send_form == 'unknown_field':
+                            count_not_defined+=1
+
+                if count_not_defined > 0 and count_sended == 0:
+                    RecordingNotSended(
+                            domain=domain, 
+                            company=company, 
+                            reason="unknown field")
+                
+                if count_sended == 0 and count_not_defined == 0:
+                    RecordingNotSended(
+                            domain=domain, 
+                            company=company, 
+                            reason="not defined"
+                            )
+
                 if check_forms == False:
                     print(f'{RED}На страницах контактов не обнаружены формы!{RESET}')
                     RecordingNotSended(domain=domain, company=company, reason="not defined")
@@ -134,66 +153,106 @@ def submitForm(driver:str, company:str):
         for field_input in form.find_elements(By.TAG_NAME, 'input'):
             if field_input.is_displayed():
                 count_input+=1
-
             if count_input >= 2:
                 for textarea in form.find_elements(By.TAG_NAME, 'textarea'):
                     count_textarea+=1
         
         if count_textarea > 0:
+            """Тут мы добавляем текст письма"""
+            enter_message = EnterTextarea(element=form, company=company)
+            if enter_message != False:
             
-            textarea = form.find_element(By.TAG_NAME, 'textarea')
-            name_textarea = textarea.get_attribute('name')
-            if 'g-recaptcha-response' in name_textarea:
-                continue
-            
-            print(f'{YELLOW}Форма {number_form}{RESET}')
-            content = GenerateContent(full_attrs="textarea", company=company)
-            textarea.send_keys(content)
-            time.sleep(2) 
-            
-            try:
-                for field_input in form.find_elements(By.TAG_NAME, 'input'):
-                    if field_input.is_displayed():
+                try:
+                    for field_input in form.find_elements(By.TAG_NAME, 'input'):
+                        if field_input.is_displayed():
 
-                        name = field_input.get_attribute('name')
-                        placeholder = field_input.get_attribute('placeholder')
-                        type_field = field_input.get_attribute('type')
+                            name = field_input.get_attribute('name')
+                            placeholder = field_input.get_attribute('placeholder')
+                            type_field = field_input.get_attribute('type')
 
-                        full_attrs = f"{name} {placeholder} {type_field}"
+                            full_attrs = f"{name} {placeholder} {type_field}"
                     
-                        if type_field == 'email':
-                            full_attrs = 'email'
-                        if 'checkbox' in type_field:
-                            try:
-                                field_input.click()
-                                print('Отметил чекбокс')
-                                continue
-                            except Exception as err:
-                                print(f'error: {err}')
+                            if type_field == 'email':
+                                full_attrs = 'email'
+                            if 'checkbox' in type_field:
+                                try:
+                                    field_input.click()
+                                    print('Отметил чекбокс')
+                                    continue
+                                except Exception as err:
+                                    print(f'error: {err}')
                         
-                        if type_field == 'submit':
-                            continue
+                            if type_field == 'submit':
+                                continue
 
-                        content = GenerateContent(full_attrs=full_attrs, company=company)
-                        print(
-                                f'Placeholder: {placeholder}\n'
-                                f'Type: {type_field}\n'
-                                f'Name: {name}\n'
-                                )
-                        if 'checkbox' not in type_field and 'submit' not in type_field:
-                            field_input.send_keys(content)
-                            time.sleep(2)
+                            content = GenerateContent(full_attrs=full_attrs, company=company)
+                            print(
+                                    f'Placeholder: {placeholder}\n'
+                                    f'Type: {type_field}\n'
+                                    f'Name: {name}\n'
+                                    )
+                            if 'checkbox' not in type_field:
+                                field_input.send_keys(content)
+                                time.sleep(2)
+                
+                    count_click_submit_button = SubmitButton(driver=driver, form=form)
 
-                submit = form.find_element(By.CSS_SELECTOR, '[type="submit"]')
-                submit.click()
-                print(f'{GREEN}Форма успешно отправлена!{RESET}')
-                time.sleep(2)
-                return True
-            except Exception:
-                print(f'{RED}Error: {err}{RESET}')
-                return False
-
+                    if count_click_submit_button > 0:
+                        return True
+                    if count_click_submit_button == 0 or \
+                            count_click_submit_button == 'unknown_field':
+                        return 'unknown_field'
+            
+                except Exception as err:
+                    print(f'{RED}Error: {err}{RESET}')
+                    return 'unknown_field'
+    
     return False
+
+def EnterTextarea(element:str, company:str):
+    textarea = element.find_element(By.TAG_NAME, 'textarea')
+    name_textarea = textarea.get_attribute('name')
+    if 'g-recaptcha-response' in name_textarea:
+        return False
+            
+    content = GenerateContent(full_attrs="textarea", company=company)
+    textarea.send_keys(content)
+    time.sleep(2)
+
+def SubmitButton(driver:str, form:str):
+    count_click = 0
+    try:
+        action = ActionChains(driver)
+        for submitButton in form.find_elements(By.CSS_SELECTOR, '[type="submit"]'):
+            action.move_to_element(submitButton).click().perform()
+            time.sleep(0.5)
+            action.send_keys(Keys.ENTER).perform()
+            time.sleep(1)
+            count_click+=1
+
+
+            print(f'{GREEN}Форма успешно отправлена!{RESET}')
+            print(f'Кликов: {count_click}')
+            time.sleep(2)
+    except UnexpectedAlertPresentException:
+        try:
+            alert = driver.switch_to.alert
+            print(f'{RED}Alert Text: {alert.text}{RESET}')
+            alert.accept()
+            print(f'{YELLOW}alert закрыт{RESET}')
+        except Exception as err:
+            print(f'{RED}Не удалось закрыть alert{err}{RESET}')
+
+        except Exception as err:
+            print(f'{RED}Ошибка при клике submit\n{err}{RESET}')
+
+
+    except Exception:
+        print(f'{RED}Error: {err}{RESET}')
+        return 'unknown_field'
+    
+    finally:
+        return count_click
 
 
 if __name__ == '__main__':
