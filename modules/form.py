@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from SinCity.Browser.driver_chrome import driver_chrome
 from SinCity.Browser.scrolling import Scrolling
@@ -13,6 +13,8 @@ from modules.miniTools import (
         )
 from modules.content import GenerateContent
 from modules.config import contact_pages
+
+from urllib3.exceptions import ReadTimeoutError
 import sys, time
 
 """Ищем страницы контактов(или где может быть контактная форма)"""
@@ -113,6 +115,13 @@ def ProcessingDomain(domain:str, company:str):
         print(f'{RED}\nExit...{RESET}')
         sys.exit()
 
+    except ReadTimeoutError:
+        print(f'{RED}Долгая загрузка{RESET}')
+        RecordingNotSended(domain=domain, company=company, reason="not_connected")
+        if driver != None:
+            driver.close()
+            driver.quit()
+
     finally:
         if driver != None:
             driver.quit()
@@ -192,6 +201,10 @@ def submitForm(driver:str, company:str):
                                     f'Name: {name}\n'
                                     )
                             if 'checkbox' not in type_field:
+                                try:
+                                    field_input.click()
+                                except:
+                                    pass
                                 field_input.send_keys(content)
                                 time.sleep(2)
                 
@@ -219,21 +232,40 @@ def EnterTextarea(element:str, company:str):
     textarea.send_keys(content)
     time.sleep(2)
 
+"""Функционал обнаружения чек-бокса капчи и клик по ней"""
+def ClickAntiBot(driver:str, form:str):
+    recaptcha = False
+    try:
+        recaptcha = form.find_element(By.CSS_SELECTOR, '[title="reCAPTCHA"]') 
+        driver.switch_to.frame(recaptcha)
+        checkbox = driver.find_element(By.CLASS_NAME, 'recaptcha-checkbox-border')
+        checkbox.click()
+        driver.switch_to.default_content()
+        recaptcha = True
+    except Exception as err:
+        print(err)
+    finally:
+        return recaptcha
+
+"""Отправка формы"""
 def SubmitButton(driver:str, form:str):
     count_click = 0
+    recaptcha = ClickAntiBot(driver=driver, form=form)
+    if recaptcha == True:print(f'{YELLOW}Обнаружена капча, отмечен чек-бокс{RESET}')
     try:
         action = ActionChains(driver)
         for submitButton in form.find_elements(By.CSS_SELECTOR, '[type="submit"]'):
+            """Добавляем в action клики по кнопке"""
             action.move_to_element(submitButton).click().perform()
             time.sleep(0.5)
+            """Добавляем прожатие Enter в action"""
             action.send_keys(Keys.ENTER).perform()
             time.sleep(1)
             count_click+=1
 
 
             print(f'{GREEN}Форма успешно отправлена!{RESET}')
-            print(f'Кликов: {count_click}')
-            time.sleep(2)
+            time.sleep(4)
     except UnexpectedAlertPresentException:
         try:
             alert = driver.switch_to.alert
@@ -259,7 +291,7 @@ if __name__ == '__main__':
     params = sys.argv
     if len(params) > 1:
         domain = params[1]
-        ProcessingDomain(domain=domain, company='Testing Company')
+        ProcessingDomain(domain=domain, company='Company')
     if len(params) == 1:
         print(f'Передай параметром домен')
         sys.exit()
