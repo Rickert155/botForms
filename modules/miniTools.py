@@ -16,6 +16,9 @@ def InitBot():
         with open(done_file_path, 'a') as file:
             file.close()
 
+def divide_line():
+    divide = '-'*50
+    return divide
 
 def CurrentTime():
     current_time = time.strftime("%d/%m/%Y %H:%M:%S")
@@ -40,6 +43,7 @@ def ListBase():
         print(f'{RED}Необходимо добавить базы в {base_dir}!{RESET}')
     return list_base
 
+"""Проверка общего документа с пройденными доменами"""
 def CheckDoneDomains():
     list_domain = set()
     with open(done_file_path, 'r') as file:
@@ -54,6 +58,15 @@ def RecordingDoneDomain(domain:str):
     with open(done_file_path, 'a') as file:
         file.write(f'{domain}\n')
 
+"""Проверка доменов по таблицам"""
+def CheckCompliteDomains(file_name:str):
+    list_domain = set()
+    with open(file_name, 'r') as file:
+        for row in csv.DictReader(file):
+            domain = row['Domain']
+            list_domain.add(domain)
+    
+    return list_domain
 
 def RecordingSuccessSend(domain:str, company:str):
     if not os.path.exists(result_dir):os.makedirs(result_dir)
@@ -63,15 +76,20 @@ def RecordingSuccessSend(domain:str, company:str):
             write.writerow(['Domain', 'Company', 'Time'])
 
     current_time = CurrentTime()
+    
+    sended_domain = CheckCompliteDomains(file_name=result_complite_file)
+    if domain not in sended_domain:
+        with open(result_complite_file, 'a+') as file:
+            write = csv.writer(file)
+            write.writerow([domain, company, current_time])
+        print(f'{GREEN}[{current_time}] Форма отправлена - {domain}{RESET}')
 
-    with open(result_complite_file, 'a+') as file:
-        write = csv.writer(file)
-        write.writerow([domain, company, current_time])
 
 
 def RecordingNotSended(domain:str, company:str, reason:str):
+    if not os.path.exists(result_dir):os.makedirs(result_dir)
     if ' ' in reason:reason = reason.replace(' ', '_')
-    file_name = f'{base_name}_{reason}.csv'
+    file_name = f'{result_dir}/{base_name}_{reason}.csv'
     if not os.path.exists(file_name):
         with open(file_name, 'a') as file:
             write = csv.writer(file)
@@ -79,8 +97,11 @@ def RecordingNotSended(domain:str, company:str, reason:str):
     
     current_time = CurrentTime()
     
-    with open(file_name, 'a+') as file:
-        write = csv.writer(file)
-        if '_' in reason:reason = reason.replace('_', ' ')
-        write.writerow([domain, company, reason, current_time])
+    recorded_domain = CheckCompliteDomains(file_name=file_name) 
+    if domain not in recorded_domain:
+        with open(file_name, 'a+') as file:
+            write = csv.writer(file)
+            if '_' in reason:reason = reason.replace('_', ' ')
+            write.writerow([domain, company, reason, current_time])
+        print(f'{RED}[{current_time}] Форма не отправлена - {reason}{RESET}')
 
