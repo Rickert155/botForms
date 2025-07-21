@@ -30,7 +30,7 @@ def botFormStart():
                     
                         ProcessingDomain(domain=domain, company=company)
                     
-                        #RecordingDoneDomain(domain=domain)
+                        RecordingDoneDomain(domain=domain)
 
                 if number_domain == 0:
                     print(f"{GREEN}Все домены пройдены!{RESET}")

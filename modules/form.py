@@ -3,7 +3,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import (
         UnexpectedAlertPresentException,
-        NoSuchElementException
+        NoSuchElementException,
+        ElementNotInteractableException
         )
 
 from SinCity.Browser.driver_chrome import driver_chrome
@@ -59,7 +60,6 @@ def ProcessingDomain(domain:str, company:str):
         forms = SearchForms(driver=driver)
 
         if forms != False:
-            print('Тут будет функция для заполнения формы')
             submitForm(driver=driver, company=company)
             if submitForm == True:
                 RecordingSuccessSend(domain=domain, company=company)
@@ -197,14 +197,17 @@ def submitForm(driver:str, company:str):
 
 """Поиск и ввод текста в textarea"""
 def EnterTextarea(element:str, company:str):
-    textarea = element.find_element(By.TAG_NAME, 'textarea')
-    name_textarea = textarea.get_attribute('name')
-    if 'g-recaptcha-response' in name_textarea:
-        return False
+    try:
+        textarea = element.find_element(By.TAG_NAME, 'textarea')
+        name_textarea = textarea.get_attribute('name')
+        if 'g-recaptcha-response' in name_textarea:
+            return False
             
-    content = GenerateContent(full_attrs="textarea", company=company)
-    textarea.send_keys(content)
-    time.sleep(2)
+        content = GenerateContent(full_attrs="textarea", company=company)
+        textarea.send_keys(content)
+        time.sleep(2)
+    except ElementNotInteractableException:
+        pass
 
 """Функционал ввода текста"""
 def EnterText(element:str, company:str):
@@ -281,7 +284,7 @@ def SubmitButton(driver:str, form:str):
 
 
             print(f'{GREEN}Форма успешно отправлена!{RESET}')
-            time.sleep(4)
+            time.sleep(6)
     except UnexpectedAlertPresentException:
         try:
             alert = driver.switch_to.alert
