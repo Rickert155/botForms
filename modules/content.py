@@ -20,6 +20,12 @@ def Content(full_attrs:str, target_company:str):
         company = data['company']
         your_project = data['your_project']
         site = data['site']
+        location = data['location']
+        region = data['region']
+        state = data['state']
+        zip_code = data['zip_code']
+        price = data['price']
+        job_title = data['job_title']
         subject = data['subject']
         message = data['message']
         
@@ -42,13 +48,19 @@ def Content(full_attrs:str, target_company:str):
         elif 'company' in full_attrs:content = company
         elif 'firma' in full_attrs:content = company
 
-        elif 'location' in full_attrs:content = 'USA'
-        
         elif 'project' in full_attrs:content = your_project
         
         elif 'site' in full_attrs or 'url' in full_attrs:content = site
         
         elif 'subj' in full_attrs or 'theme' in full_attrs:content = subject
+
+        elif 'location' in full_attrs:content = location
+        elif 'region' in full_attrs:content = region
+        elif 'state' in full_attrs:content = state
+        elif 'zip' in full_attrs:content = zip_code
+        elif 'job' in full_attrs or 'title' in full_attrs:content = job_title
+
+        elif 'price' in full_attrs or:content = price
 
         elif 'message' in full_attrs:content = message
         elif 'body' in full_attrs:content = message
