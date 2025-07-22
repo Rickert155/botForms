@@ -17,7 +17,12 @@ def ReadDoneDomain():
 
     print(f'Done domains: {len(list_domains)}\n')
 
+count_domain = 0
+sended_success = 0
+
 def ReadDoc(doc:str):
+    global count_domain, sended_success
+
     list_domains = set()
     with open(doc, 'r') as file:
         for row in csv.DictReader(file):
@@ -28,10 +33,18 @@ def ReadDoc(doc:str):
     if '_' in type_result:type_result = type_result.replace('_', ' ')
     if '.csv' in type_result:type_result = type_result.replace('.csv', '')
     if base_name in type_result:type_result = type_result.replace(f'{base_name} ', '')
+    if len(type_result) <= 1:
+        type_result = "success send"
+        sended_success+=len(list_domains)
+    type_result = type_result.strip()
     print(f'{type_result} - {len(list_domains)}')
+    count_domain+=len(list_domains)
 
 if __name__ == '__main__':
     list_doc = ListDocs()
     ReadDoneDomain()
     for doc in list_doc:
         ReadDoc(doc=doc)
+    print(f'\ncurrent sending: {count_domain}')
+    percent_success = sended_success / (count_domain / 100)
+    print(f'\npercent sended: {percent_success} %')

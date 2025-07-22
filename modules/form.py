@@ -206,6 +206,7 @@ def submitForm(driver:str, company:str):
 def EnterTextarea(element:str, company:str):
     try:
         textarea = element.find_element(By.TAG_NAME, 'textarea')
+        print('textarea')
         name_textarea = textarea.get_attribute('name')
         if 'g-recaptcha-response' in name_textarea:
             return False
@@ -246,6 +247,24 @@ def EnterText(element:str, company:str, driver:str):
                     time.sleep(0.5)
                     return
                 except:
+                    print(f'error: {err}')
+                    return
+
+        if 'radio' in type_field:
+            try:
+                element.find_element(By.CSS_SELECTOR, '[type="radio"]').click()
+            except:
+                try:
+                    driver.execute_script(
+                            "arguments[0].checked = true;"
+                            "arguments[0].dispatchEvent(new Event('change', "
+                            "{ bubbles: true }));", 
+                            element
+                            )
+                    time.sleep(0.5)
+                    print('Отметил радио кнопку')
+                    return
+                except Exception as err:
                     print(f'error: {err}')
                     return
                         
@@ -302,12 +321,18 @@ def SubmitButton(driver:str, form:str):
         for submit in submitInput:
             if submit.get_attribute('type') == 'submit' or submit.tag_name == 'button':
                 try:
-                    action = ActionChains(driver)
-                    action.move_to_element(submit).send_keys(Keys.ENTER).perform()
+                    try:
+                        action = ActionChains(driver)
+                        action.move_to_element(submit).send_keys(Keys.ENTER).perform()
+                    except:
+                        pass
+                    try:
+                        driver.execute_script(
+                                "arguments[0].dispatchEvent(new "
+                                "MouseEvent('click', {bubbles: true}))", submit)
+                    except:
+                          pass  
                     time.sleep(5)
-                    driver.execute_script(
-                            "arguments[0].dispatchEvent(new "
-                            "MouseEvent('click', {bubbles: true}))", submit)
                     count_click+=1
                     break
                 except Exception as err:
@@ -323,7 +348,7 @@ if __name__ == '__main__':
     params = sys.argv
     if len(params) > 1:
         domain = params[1]
-        ProcessingDomain(domain=domain, company='Company')
+        ProcessingDomain(domain=domain, company='Digital')
     if len(params) == 1:
         print(f'Передай параметром домен')
         sys.exit()

@@ -58,9 +58,10 @@ def Content(full_attrs:str, target_company:str):
         elif 'region' in full_attrs:content = region
         elif 'state' in full_attrs:content = state
         elif 'zip' in full_attrs:content = zip_code
+        elif 'ort' in full_attrs:content = zip_code
         elif 'job' in full_attrs or 'title' in full_attrs:content = job_title
 
-        elif 'price' in full_attrs or:content = price
+        elif 'price' in full_attrs or 'budget' in full_attrs:content = price
 
         elif 'message' in full_attrs:content = message
         elif 'body' in full_attrs:content = message
@@ -73,6 +74,7 @@ def Content(full_attrs:str, target_company:str):
         elif 'name' in full_attrs:content = user_name
         elif 'naam' in full_attrs:content = user_name
         elif 'nome' in full_attrs:content = user_name
+        elif 'wpforms[fields][1]' in full_attrs:content = user_name
         
         else:
             content = your_project 
@@ -100,6 +102,6 @@ if __name__ == '__main__':
     params = sys.argv
     if len(params) > 1:
         full_attrs = params[1]
-        GenerateContent(company='Digital Octane', full_attrs=full_attrs)
+        GenerateContent(company='Digital', full_attrs=full_attrs)
     if len(params) == 1:
         print("Введите параметром имя!")
