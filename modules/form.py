@@ -4,7 +4,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import (
         UnexpectedAlertPresentException,
         NoSuchElementException,
-        ElementNotInteractableException
+        ElementNotInteractableException,
+        WebDriverException
         )
 
 from SinCity.Browser.driver_chrome import driver_chrome
@@ -60,10 +61,12 @@ def ProcessingDomain(domain:str, company:str):
         forms = SearchForms(driver=driver)
 
         if forms != False:
-            submitForm(driver=driver, company=company)
-            if submitForm == True:
+            send_form_home_page = submitForm(driver=driver, company=company)
+            if send_form_home_page == True:
                 RecordingSuccessSend(domain=domain, company=company)
                 return True
+            if 'unknown_field' in send_form_home_page:
+                RecordingNotSended(domain=domain, company=company, reason="unknown field")
             
         if forms == False:
             list_pages = OtherPages(driver=driver, domain=domain)
@@ -125,6 +128,11 @@ def ProcessingDomain(domain:str, company:str):
         if driver != None:
             driver.close()
             driver.quit()
+    
+    except WebDriverException:
+        print(f'{RED}Сайт не работает{RESET}')
+        if driver != None:
+            driver.quit()
 
     finally:
         if driver != None:
@@ -148,8 +156,8 @@ def SearchForms(driver:str):
             if count_textarea > 0:
                 count_form+=1
     
-        if count_form > 0:
-            print(f'Форма {count_form}')
+        #if count_form > 0:
+        #    print(f'Форма {count_form}')
     
     
     if count_form == 0:
@@ -179,14 +187,13 @@ def submitForm(driver:str, company:str):
                 try:
                     for field_input in form.find_elements(By.TAG_NAME, 'input'):
                         """Обрабатываем каждое поле отдельно"""
-                        EnterText(element=field_input, company=company)
+                        EnterText(element=field_input, company=company, driver=driver)
 
                     count_click_submit_button = SubmitButton(driver=driver, form=form)
 
                     if count_click_submit_button > 0:
                         return True
-                    if count_click_submit_button == 0 or \
-                            count_click_submit_button == 'unknown_field':
+                    if count_click_submit_button == 0:
                         return 'unknown_field'
             
                 except Exception as err:
@@ -210,7 +217,7 @@ def EnterTextarea(element:str, company:str):
         pass
 
 """Функционал ввода текста"""
-def EnterText(element:str, company:str):
+def EnterText(element:str, company:str, driver:str):
     if element.is_displayed():
 
         name = element.get_attribute('name')
@@ -223,14 +230,31 @@ def EnterText(element:str, company:str):
             full_attrs = 'email'
         if 'checkbox' in type_field:
             try:
-                element.click()
+                element.find_element(By.CSS_SELECTOR, '[type="checkbox"]').click()
                 print('Отметил чекбокс')
+                time.sleep(0.5)
                 return
             except Exception as err:
-                print(f'error: {err}')
+                try:
+                    driver.execute_script(
+                            "arguments[0].checked = true;"
+                            "arguments[0].dispatchEvent(new Event('change', "
+                            "{ bubbles: true }));", 
+                            element
+                            )
+                    print('Отметил чекбокс')
+                    time.sleep(0.5)
+                    return
+                except:
+                    print(f'error: {err}')
+                    return
                         
         if type_field == 'submit':
             return 
+        if type_field == 'file':
+            return
+        if type_field == 'tel':
+            full_attrs = 'tel'
 
         content = GenerateContent(full_attrs=full_attrs, company=company)
         print(
@@ -271,40 +295,29 @@ def SubmitButton(driver:str, form:str):
     count_click = 0
     recaptcha = ClickAntiBot(driver=driver, form=form)
     if recaptcha == True:print(f'{YELLOW}Обнаружена капча, отмечен чек-бокс{RESET}')
+    if recaptcha != True:print(f'{YELLOW}Капча не обнаружена{RESET}')
+    
     try:
-        action = ActionChains(driver)
-        for submitButton in form.find_elements(By.CSS_SELECTOR, '[type="submit"]'):
-            """Добавляем в action клики по кнопке"""
-            action.move_to_element(submitButton).click().perform()
-            time.sleep(0.5)
-            """Добавляем прожатие Enter в action"""
-            action.send_keys(Keys.ENTER).perform()
-            time.sleep(1)
-            count_click+=1
+        submitInput = form.find_elements(By.CSS_SELECTOR, 'button, *[type="submit"]')
+        for submit in submitInput:
+            if submit.get_attribute('type') == 'submit' or submit.tag_name == 'button':
+                try:
+                    action = ActionChains(driver)
+                    action.move_to_element(submit).send_keys(Keys.ENTER).perform()
+                    time.sleep(5)
+                    driver.execute_script(
+                            "arguments[0].dispatchEvent(new "
+                            "MouseEvent('click', {bubbles: true}))", submit)
+                    count_click+=1
+                    break
+                except Exception as err:
+                    print(f'{RED}При отправке формы произошла ошибка{RESET}')
 
-
-            print(f'{GREEN}Форма успешно отправлена!{RESET}')
-            time.sleep(6)
-    except UnexpectedAlertPresentException:
-        try:
-            alert = driver.switch_to.alert
-            print(f'{RED}Alert Text: {alert.text}{RESET}')
-            alert.accept()
-            print(f'{YELLOW}alert закрыт{RESET}')
-        except Exception as err:
-            print(f'{RED}Не удалось закрыть alert{err}{RESET}')
-
-        except Exception as err:
-            print(f'{RED}Ошибка при клике submit\n{err}{RESET}')
-
-
-    except Exception:
-        print(f'{RED}Error: {err}{RESET}')
-        return 'unknown_field'
+    except:
+        print(f'{RED}Кнопка отправки не обнаружена!{RESET}')
     
     finally:
         return count_click
-
 
 if __name__ == '__main__':
     params = sys.argv

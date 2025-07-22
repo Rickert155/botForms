@@ -37,7 +37,7 @@ def Content(full_attrs:str, target_company:str):
         elif 'email' in full_attrs or 'mail' in full_attrs:content = email
         
         elif 'phone' in full_attrs:content = phone
-        elif 'tele' in full_attrs:content = phone
+        elif 'tel' in full_attrs:content = phone
         
         elif 'company' in full_attrs:content = company
         elif 'firma' in full_attrs:content = company
@@ -63,7 +63,7 @@ def Content(full_attrs:str, target_company:str):
         elif 'nome' in full_attrs:content = user_name
         
         else:
-            return False
+            content = your_project 
 
         return content
 
