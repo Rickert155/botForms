@@ -49,6 +49,8 @@ def ProcessingDomain(domain:str, company:str):
         current_url = driver.current_url
 
         Scrolling(driver=driver)
+        
+        CloseCookieBanner(driver)
 
         if domain not in current_url:
             current_domain = current_url.split('://')[1]
@@ -81,7 +83,7 @@ def ProcessingDomain(domain:str, company:str):
                     number_page+=1
                     print(f'{BLUE}[{number_page}] {page}{RESET}')
                     driver.get(page)
-                    time.sleep(2)
+                    time.sleep(3)
                     Scrolling(driver=driver)
                     forms = SearchForms(driver=driver)
                     if forms != False:
@@ -139,6 +141,23 @@ def ProcessingDomain(domain:str, company:str):
             driver.quit()
         print(divide_line())
 
+def CloseCookieBanner(driver):
+    cookie_bunner_texts = ['accept', 'akzeptieren', 'all']
+    cookie_buttons = driver.find_elements(By.CSS_SELECTOR, 'button, a')
+    if len(cookie_buttons) > 0:
+        for button in cookie_buttons:
+            text = button.text
+            text = text.strip().lower()
+            for text_button in cookie_bunner_texts:
+                if text_button in text:
+                    try:
+                        button.click()
+                        print(f'{GREEN}закрыл баннер cookie{RESET}')
+                        return
+                    except:
+                        continue 
+            
+
 
 """Поиск формы на странице"""
 def SearchForms(driver:str):
@@ -149,7 +168,7 @@ def SearchForms(driver:str):
             if field_input.is_displayed():
                 count_input+=1
 
-        if count_input >= 3:
+        if count_input >= 2:
             count_textarea=0
             for textarea in form.find_elements(By.TAG_NAME, 'textarea'):
                 count_textarea+=1
@@ -206,7 +225,6 @@ def submitForm(driver:str, company:str):
 def EnterTextarea(element:str, company:str):
     try:
         textarea = element.find_element(By.TAG_NAME, 'textarea')
-        print('textarea')
         name_textarea = textarea.get_attribute('name')
         if 'g-recaptcha-response' in name_textarea:
             return False
@@ -348,7 +366,7 @@ if __name__ == '__main__':
     params = sys.argv
     if len(params) > 1:
         domain = params[1]
-        ProcessingDomain(domain=domain, company='Digital')
+        ProcessingDomain(domain=domain, company='Digital Octane')
     if len(params) == 1:
         print(f'Передай параметром домен')
         sys.exit()

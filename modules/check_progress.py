@@ -47,4 +47,4 @@ if __name__ == '__main__':
         ReadDoc(doc=doc)
     print(f'\ncurrent sending: {count_domain}')
     percent_success = sended_success / (count_domain / 100)
-    print(f'\npercent sended: {percent_success} %')
+    print(f'\npercent sended: {round(percent_success, 2)} %')
