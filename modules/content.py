@@ -47,6 +47,7 @@ def Content(full_attrs:str, target_company:str):
         
         elif 'company' in full_attrs:content = company
         elif 'firma' in full_attrs:content = company
+        elif 'organiz' in full_attrs:content = company
 
         elif 'project' in full_attrs:content = your_project
         

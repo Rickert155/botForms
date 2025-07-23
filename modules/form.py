@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import (
         UnexpectedAlertPresentException,
@@ -69,6 +70,8 @@ def ProcessingDomain(domain:str, company:str):
                 return True
             if 'unknown_field' in send_form_home_page:
                 RecordingNotSended(domain=domain, company=company, reason="unknown field")
+            if send_form_home_page == False:
+                RecordingNotSended(domain=domain, company=company, reason="not defined")
             
         if forms == False:
             list_pages = OtherPages(driver=driver, domain=domain)
@@ -142,17 +145,17 @@ def ProcessingDomain(domain:str, company:str):
         print(divide_line())
 
 def CloseCookieBanner(driver):
-    cookie_bunner_texts = ['accept', 'akzeptieren', 'all']
+    cookie_bunner_texts = ['accept', 'akzeptieren', 'all', 'keep', 'adjust']
     cookie_buttons = driver.find_elements(By.CSS_SELECTOR, 'button, a')
     if len(cookie_buttons) > 0:
         for button in cookie_buttons:
             text = button.text
             text = text.strip().lower()
             for text_button in cookie_bunner_texts:
-                if text_button in text:
+                if text_button in text or text == 'ok':
                     try:
                         button.click()
-                        print(f'{GREEN}закрыл баннер cookie{RESET}')
+                        print(f'{GREEN}Закрыл баннер cookie{RESET}')
                         return
                     except:
                         continue 
@@ -204,9 +207,13 @@ def submitForm(driver:str, company:str):
             if enter_message != False:
             
                 try:
+                    """Выбор первой опции из первого селекта"""
+                    select_item = SelectItem(form=form)
+                    
                     for field_input in form.find_elements(By.TAG_NAME, 'input'):
                         """Обрабатываем каждое поле отдельно"""
                         EnterText(element=field_input, company=company, driver=driver)
+                    
 
                     count_click_submit_button = SubmitButton(driver=driver, form=form)
 
@@ -220,6 +227,18 @@ def submitForm(driver:str, company:str):
                     return 'unknown_field'
     
     return False
+
+def SelectItem(form:str):
+    list_selects = form.find_elements(By.TAG_NAME, 'select')
+    if len(list_selects) > 0:
+        for select in list_selects:
+            if select.is_displayed:
+                try:
+                    target_select = Select(select)
+                    target_select.select_by_index(0)
+                    return
+                except:
+                    return
 
 """Поиск и ввод текста в textarea"""
 def EnterTextarea(element:str, company:str):
