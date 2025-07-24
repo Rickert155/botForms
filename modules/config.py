@@ -15,7 +15,6 @@ content_file_path = f'{content_dir}/{content_file}'
 """Вариации страниц контактов"""
 contact_pages = [
             'contact',
-            'contact-us',
             'letstalk',
             'lets-talk',
             'contacto',
@@ -26,3 +25,15 @@ contact_pages = [
             'start',
             'kontakt'
             ]
+
+
+cookie_bunner_texts = [
+        'accept', 
+        'akzeptieren', 
+        'all', 
+        'keep', 
+        'adjust', 
+        'accoord', 
+        'akkoord', 
+        'agree'
+        ]

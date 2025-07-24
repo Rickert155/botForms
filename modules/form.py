@@ -6,7 +6,8 @@ from selenium.common.exceptions import (
         UnexpectedAlertPresentException,
         NoSuchElementException,
         ElementNotInteractableException,
-        WebDriverException
+        WebDriverException,
+        InvalidSessionIdException
         )
 
 from SinCity.Browser.driver_chrome import driver_chrome
@@ -19,9 +20,9 @@ from modules.miniTools import (
         )
 
 from modules.content import GenerateContent
-from modules.config import contact_pages
+from modules.config import contact_pages, cookie_bunner_texts
 
-from urllib3.exceptions import ReadTimeoutError
+from urllib3.exceptions import ReadTimeoutError, MaxRetryError
 import sys, time
 
 """Ищем страницы контактов(или где может быть контактная форма)"""
@@ -45,6 +46,8 @@ def ProcessingDomain(domain:str, company:str):
         driver = driver_chrome()
         url = domain
         if '://' not in url:url = f'https://{domain}'
+        """Максимальное время ожидание загрузки страницы"""
+        driver.set_page_load_timeout(15)
         driver.get(url)
         time.sleep(2)
         current_url = driver.current_url
@@ -68,8 +71,12 @@ def ProcessingDomain(domain:str, company:str):
             if send_form_home_page == True:
                 RecordingSuccessSend(domain=domain, company=company)
                 return True
-            if 'unknown_field' in send_form_home_page:
-                RecordingNotSended(domain=domain, company=company, reason="unknown field")
+            try:
+                if 'unknown_field' in send_form_home_page:
+                    RecordingNotSended(domain=domain, company=company, reason="unknown field")
+            except TypeError:
+                print(f'{RED}type error: bool{RESET}')
+                return
             if send_form_home_page == False:
                 RecordingNotSended(domain=domain, company=company, reason="not defined")
             
@@ -91,7 +98,6 @@ def ProcessingDomain(domain:str, company:str):
                     forms = SearchForms(driver=driver)
                     if forms != False:
                         check_forms = True
-                        print(f'На странице контактов обнаружена форма')
                         send_form = submitForm(driver=driver, company=company)
                         if send_form == True:
                             RecordingSuccessSend(domain=domain, company=company)
@@ -129,15 +135,22 @@ def ProcessingDomain(domain:str, company:str):
 
     except ReadTimeoutError:
         print(f'{RED}Долгая загрузка{RESET}')
-        RecordingNotSended(domain=domain, company=company, reason="not_connected")
+        RecordingNotSended(domain=domain, company=company, reason="not connected")
         if driver != None:
             driver.close()
             driver.quit()
     
     except WebDriverException:
         print(f'{RED}Сайт не работает{RESET}')
+        RecordingNotSended(domain=domain, company=company, reason="not connected")
         if driver != None:
             driver.quit()
+
+    except InvalidSessionIdException:
+        return
+
+    except MaxRetryError:
+        return
 
     finally:
         if driver != None:
@@ -145,14 +158,13 @@ def ProcessingDomain(domain:str, company:str):
         print(divide_line())
 
 def CloseCookieBanner(driver):
-    cookie_bunner_texts = ['accept', 'akzeptieren', 'all', 'keep', 'adjust']
     cookie_buttons = driver.find_elements(By.CSS_SELECTOR, 'button, a')
     if len(cookie_buttons) > 0:
         for button in cookie_buttons:
             text = button.text
             text = text.strip().lower()
             for text_button in cookie_bunner_texts:
-                if text_button in text or text == 'ok':
+                if text_button in text or text == 'ok' or text == 'got it':
                     try:
                         button.click()
                         print(f'{GREEN}Закрыл баннер cookie{RESET}')
@@ -330,7 +342,7 @@ def EnterText(element:str, company:str, driver:str):
         time.sleep(2)
 
 """Функционал обнаружения чек-бокса капчи и клик по ней"""
-def ClickAntiBot(driver:str, form:str):
+def ClickAntiBotRecaptcha(driver:str, form:str):
     recaptcha = False
     try:
         recaptcha = form.find_element(By.CSS_SELECTOR, '[title="reCAPTCHA"]') 
@@ -349,7 +361,7 @@ def ClickAntiBot(driver:str, form:str):
 """Отправка формы"""
 def SubmitButton(driver:str, form:str):
     count_click = 0
-    recaptcha = ClickAntiBot(driver=driver, form=form)
+    recaptcha = ClickAntiBotRecaptcha(driver=driver, form=form)
     if recaptcha == True:print(f'{YELLOW}Обнаружена капча, отмечен чек-бокс{RESET}')
     if recaptcha != True:print(f'{YELLOW}Капча не обнаружена{RESET}')
     
