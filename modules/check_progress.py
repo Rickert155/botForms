@@ -1,4 +1,9 @@
-from modules.config import result_dir, base_name, done_file_path
+from modules.config import (
+        result_dir, 
+        base_name, 
+        done_file_path, 
+        base_dir
+        )
 import os, csv, time
 
 def ListDocs():
@@ -9,13 +14,33 @@ def ListDocs():
     return list_docs
 
 def ReadDoneDomain():
-    list_domains = set()
+    def ListBase():
+        list_base = []
+        for base in os.listdir(base_dir):
+            if '.csv' in base:list_base.append(f'{base_dir}/{base}')
+        return list_base
+    
+    list_base = ListBase()
+    all_domains = set()
+    for base in list_base:
+        with open(base, 'r') as file:
+            for row in csv.DictReader(file):
+                domain = row['Domain']
+                all_domains.add(domain)
+
+
+    done_domains = set()
     with open(done_file_path, 'r') as file:
         for line in file.readlines():
             domain = line.strip()
-            list_domains.add(domain)
-
-    print(f'Done domains: {len(list_domains)}\n')
+            done_domains.add(domain)
+    
+    percent_progress = round(len(done_domains) / (len(all_domains) / 100), 2)
+    print(
+            f'Всего доменов:\t\t{len(all_domains)}\n'
+            f'Пройдено доменов:\t{len(done_domains)}\n'
+            f'Прогресс:\t\t{percent_progress} %\n'
+            )
 
 sended_today = set()
 
