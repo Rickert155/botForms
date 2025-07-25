@@ -23,7 +23,8 @@ contact_pages = [
             'touch',
             'get-',
             'start',
-            'kontakt'
+            'kontakt',
+            'contattaci'
             ]
 
 
