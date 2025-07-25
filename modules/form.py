@@ -31,7 +31,7 @@ def OtherPages(driver:str, domain:str):
     for link in driver.find_elements(By.TAG_NAME, 'a'):
         link = link.get_attribute('href')
         if link:
-            if domain in link and '#' not in link and 'mailto:' not in link:
+            if domain in link and '#' not in link and 'mailto' not in link:
                 for page in contact_pages:
                     if page in link:
                         if link[-1] == '/':link = link[:-1]
