@@ -7,11 +7,14 @@ from modules.config import (
 import os, csv, time, sys
 
 def ListDocs():
-    list_docs = []
-    for doc in os.listdir(result_dir):
-        if '.csv' in doc:list_docs.append(f'{result_dir}/{doc}')
-
-    return list_docs
+    try:
+        list_docs = []
+        for doc in os.listdir(result_dir):
+            if '.csv' in doc:list_docs.append(f'{result_dir}/{doc}')
+    
+        return list_docs
+    except FileNotFoundError:
+        print(f'Не обнаружена директория {result_dir}')
 
 def ReadDoneDomain():
     def ListBase():
