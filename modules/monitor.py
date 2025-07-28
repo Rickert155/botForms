@@ -47,9 +47,10 @@ sended_today = set()
 count_domain = 0
 sended_success = 0
 not_connected = 0
+redirect = 0
 
 def ReadDoc(doc:str):
-    global count_domain, sended_success, not_connected, sended_today
+    global count_domain, sended_success, not_connected, sended_today, redirect
     
     current_date = time.strftime("%d/%m/%Y")
 
@@ -69,6 +70,8 @@ def ReadDoc(doc:str):
     if base_name in type_result:type_result = type_result.replace(f'{base_name} ', '')
     if 'connected' in type_result:
         not_connected = len(list_domains)
+    if 'redirect' in type_result:
+        redirect+=len(list_domains)
     if len(type_result) <= 1:
         type_result = "success send"
         sended_success+=len(list_domains)
@@ -87,7 +90,7 @@ if __name__ == '__main__':
     for doc in list_doc:
         ReadDoc(doc=doc)
     current_sending = count_domain-not_connected
-    exception_not_connectad = count_domain - not_connected
+    exception_not_connectad = count_domain - not_connected - redirect
     percent_success = sended_success / (exception_not_connectad / 100) 
     print(
             f'\nУспешная обработка:\t{current_sending}\n'
