@@ -15,6 +15,7 @@ def ListDocs():
         return list_docs
     except FileNotFoundError:
         print(f'Не обнаружена директория {result_dir}')
+        sys.exit()
 
 def ReadDoneDomain():
     def ListBase():
