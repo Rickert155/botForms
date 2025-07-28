@@ -4,7 +4,7 @@ from modules.config import (
         done_file_path, 
         base_dir
         )
-import os, csv, time
+import os, csv, time, sys
 
 def ListDocs():
     list_docs = []
@@ -29,11 +29,15 @@ def ReadDoneDomain():
                 all_domains.add(domain)
 
 
-    done_domains = set()
-    with open(done_file_path, 'r') as file:
-        for line in file.readlines():
-            domain = line.strip()
-            done_domains.add(domain)
+    try:
+        done_domains = set()
+        with open(done_file_path, 'r') as file:
+            for line in file.readlines():
+                domain = line.strip()
+                done_domains.add(domain)
+    except FileNotFoundError:
+        print(f'Не обнаружен документ {done_file_path}...')
+        sys.exit()
     
     percent_progress = round(len(done_domains) / (len(all_domains) / 100), 2)
     print(
