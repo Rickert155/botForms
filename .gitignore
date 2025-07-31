@@ -5,3 +5,4 @@ Data/content.json
 **/__pycache__/
 old/*
 Analytics/*
+AnalResult/*
