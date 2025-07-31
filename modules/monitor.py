@@ -85,10 +85,10 @@ def ReadDoc(doc:str):
         sended_success+=len(list_domains)
     type_result = type_result.strip()
     if 'not defined' in type_result:type_result = 'Не найдено форм'
-    if 'unknown' in type_result:type_result = 'Форма с неизвестным полем'
-    if 'success' in type_result:type_result = 'Успешная отправка'
-    if 'redirect' in type_result:type_result = 'Редирект домена'
-    if 'not connected' in type_result:type_result = 'Долгая загрузка страниц'
+    elif 'unknown' in type_result:type_result = 'Форма с неизвестным полем'
+    elif 'redirect' in type_result:type_result = 'Редирект домена'
+    elif 'not connected' in type_result:type_result = 'Долгая загрузка страниц'
+    else:type_result = 'Успешная отправка'
     print(f'{type_result} - {len(list_domains)}')
     count_domain+=len(list_domains)
 

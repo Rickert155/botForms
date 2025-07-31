@@ -12,6 +12,8 @@ content_dir = 'Data'
 content_file = 'content.json'
 content_file_path = f'{content_dir}/{content_file}'
 
+analytics_dir = 'Analytics'
+
 """Вариации страниц контактов"""
 contact_pages = [
             'contact',
