@@ -21,7 +21,7 @@ def botFormStart():
                 number_domain = 0
 
                 for row in csv.DictReader(file):
-                    domain = row['Domain']
+                    domain = row['Domain'].lower()
                     company = row['Company']
                 
                     if domain not in complite_domain:
