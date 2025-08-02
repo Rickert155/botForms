@@ -65,7 +65,6 @@ def ProcessingDomain(domain:str, company:str):
                     driver.quit()
                 return False
             else:
-                print(f'{RED}Редирект {domain} -> {current_domain}{RESET}')
                 RecordingNotSended(domain=domain, company=company, reason="redirect")
                 if driver != None:
                     driver.quit()
