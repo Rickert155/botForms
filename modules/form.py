@@ -47,7 +47,7 @@ def ProcessingDomain(domain:str, company:str):
         url = domain
         if '://' not in url:url = f'https://{domain}'
         """Максимальное время ожидание загрузки страницы"""
-        driver.set_page_load_timeout(15)
+        driver.set_page_load_timeout(40)
         driver.get(url)
         time.sleep(2)
         current_url = driver.current_url
@@ -57,12 +57,20 @@ def ProcessingDomain(domain:str, company:str):
         CloseCookieBanner(driver)
 
         if domain not in current_url:
-            current_domain = current_url.split('://')[1]
-            print(f'{RED}Редирект {domain} -> {current_domain}{RESET}')
-            RecordingNotSended(domain=domain, company=company, reason="redirect")
-            if driver != None:
-                driver.quit()
-            return False
+            if '://' in current_url:
+                current_domain = current_url.split('://')[1]
+                print(f'{RED}Редирект {domain} -> {current_domain}{RESET}')
+                RecordingNotSended(domain=domain, company=company, reason="redirect")
+                if driver != None:
+                    driver.quit()
+                return False
+            else:
+                print(f'{RED}Редирект {domain} -> {current_domain}{RESET}')
+                RecordingNotSended(domain=domain, company=company, reason="redirect")
+                if driver != None:
+                    driver.quit()
+                return False
+
 
         forms = SearchForms(driver=driver)
 
@@ -135,6 +143,13 @@ def ProcessingDomain(domain:str, company:str):
 
     except ReadTimeoutError:
         print(f'{RED}Долгая загрузка{RESET}')
+        RecordingNotSended(domain=domain, company=company, reason="not connected")
+        if driver != None:
+            driver.close()
+            driver.quit()
+
+    except MaxRetryError:
+        print(f'Максимальное количество попыток отпкрыть сайт')
         RecordingNotSended(domain=domain, company=company, reason="not connected")
         if driver != None:
             driver.close()
