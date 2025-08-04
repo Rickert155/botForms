@@ -78,7 +78,7 @@ def Content(full_attrs:str, target_company:str):
         elif 'wpforms[fields][1]' in full_attrs:content = user_name
         
         else:
-            content = your_project 
+            content = full_name 
 
         return content
 
