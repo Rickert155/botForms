@@ -3,7 +3,7 @@
 
 ## Установка
 ```sh
-git clone https://github.com/ricker155/botForms.git
+git clone https://github.com/rickert155/botForms.git
 ```
 ```sh
 cd botForms
