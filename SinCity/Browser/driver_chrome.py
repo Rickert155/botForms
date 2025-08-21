@@ -10,7 +10,7 @@ def driver_chrome():
     chrome_options = Options()
     # Подключение своего профиля
     chrome_options.add_argument(f"--user-agent={head}")
-    chrome_options.add_argument("--dns-server=8.8.8.8")
+    chrome_options.add_argument("--dns-server=8.8.8.8,8.8.4.4")
 
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
