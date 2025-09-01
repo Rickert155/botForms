@@ -30,8 +30,8 @@ def Content(full_attrs:str, target_company:str):
         message = data['message']
         
         template = "[COMPANY NAME]"
-        subject = subject.replace(template, target_company)
-        message = message.replace(template, target_company)
+        if template in subject:subject = subject.replace(template, target_company)
+        if template in message:message = message.replace(template, target_company)
 
         if 'first' in full_attrs:content = first_name
         
