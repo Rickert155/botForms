@@ -29,7 +29,7 @@ def Content(full_attrs:str, target_company:str):
         subject = data['subject']
         message = data['message']
         
-        template = "[AGENCY NAME]"
+        template = "[COMPANY NAME]"
         subject = subject.replace(template, target_company)
         message = message.replace(template, target_company)
 
